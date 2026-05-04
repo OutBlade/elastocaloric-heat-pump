@@ -1,0 +1,77 @@
+{
+  "name": "ec-lab",
+  "version": "1.0.0",
+  "description": "Daily-use research tool for elastocaloric polymer film experiments — live serial monitor, DSC analysis, COP dashboard, and sample database.",
+  "main": "main.js",
+  "author": "OutBlade",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "rebuild": "electron-rebuild -f -w serialport",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder",
+    "dist:win": "cross-env CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --win --x64",
+    "postinstall": "electron-rebuild -f -w serialport || true"
+  },
+  "dependencies": {
+    "electron-store": "^8.2.0",
+    "electron-updater": "^6.3.0",
+    "serialport": "^12.0.0"
+  },
+  "devDependencies": {
+    "cross-env": "^7.0.3",
+    "electron": "^32.0.0",
+    "electron-builder": "^25.0.0",
+    "electron-rebuild": "^3.2.9"
+  },
+  "build": {
+    "appId": "com.outblade.eclab",
+    "productName": "EC-Lab",
+    "copyright": "Copyright © 2026 OutBlade",
+    "asar": true,
+    "asarUnpack": ["node_modules/serialport/**", "node_modules/@serialport/**"],
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "src/**/*",
+      "package.json"
+    ],
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "OutBlade",
+        "repo": "elastocaloric-heat-pump",
+        "releaseType": "release"
+      }
+    ],
+    "win": {
+      "target": [{ "target": "nsis", "arch": ["x64"] }],
+      "artifactName": "ECLabSetup-${version}.exe",
+      "signingHashAlgorithms": null,
+      "sign": null
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowElevation": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "EC-Lab"
+    },
+    "mac": {
+      "target": "dmg",
+      "category": "public.app-category.utilities",
+      "icon": "build/icon.icns"
+    },
+    "linux": {
+      "target": ["AppImage", "deb"],
+      "category": "Science",
+      "icon": "build/icon.png"
+    }
+  }
+}

@@ -1,0 +1,83 @@
+name: Release EC-Lab
+
+on:
+  push:
+    tags:
+      - 'app-v*'   # trigger on tags like app-v1.0.1
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    name: Build Windows installer
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: app/package-lock.json
+
+      - name: Install dependencies
+        working-directory: app
+        run: npm ci
+
+      - name: Rebuild native modules for Electron
+        working-directory: app
+        run: npx electron-rebuild -f -w serialport
+
+      - name: Build Windows installer
+        working-directory: app
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm run dist:win
+
+      - name: Upload installer artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ECLabSetup-windows
+          path: app/dist/ECLabSetup-*.exe
+
+  publish:
+    name: Publish GitHub Release
+    needs: build-windows
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: ECLabSetup-windows
+          path: dist/
+
+      - name: Get version from tag
+        id: version
+        run: echo "version=${GITHUB_REF_NAME#app-v}" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "EC-Lab v${{ steps.version.outputs.version }}"
+          body: |
+            ## EC-Lab v${{ steps.version.outputs.version }}
+
+            Elastocaloric Research Platform — desktop app for Dr. Xu's ZET lab.
+
+            ### Install
+            Download `ECLabSetup-${{ steps.version.outputs.version }}.exe` and run it.
+            Existing installations update automatically within 5 minutes of launch.
+
+            ### What's included
+            Live serial monitor · DSC analysis · COP dashboard · Sample database · HTML reports
+          files: dist/ECLabSetup-*.exe
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

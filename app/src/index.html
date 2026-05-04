@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com;">
+  <title>EC-Lab</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles/app.css">
+</head>
+<body>
+
+<!-- ── Top bar ─────────────────────────────────────────────────────────────── -->
+<header class="topbar">
+  <div class="topbar-left">
+    <div class="logo">
+      <span class="logo-icon">⟨EC⟩</span>
+      <span class="logo-text">EC-Lab</span>
+    </div>
+    <span class="logo-sub">Elastocaloric Research Platform</span>
+  </div>
+  <div class="topbar-center">
+    <div id="serial-status-pill" class="status-pill disconnected">
+      <span class="status-dot"></span>
+      <span id="serial-status-text">Not connected</span>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <span id="update-banner" class="update-banner hidden"></span>
+    <span id="app-version" class="version-badge">v1.0.0</span>
+  </div>
+</header>
+
+<!-- ── Layout ──────────────────────────────────────────────────────────────── -->
+<div class="layout">
+
+  <!-- Sidebar -->
+  <nav class="sidebar">
+    <button class="nav-btn active" data-tab="monitor">
+      <span class="nav-icon">◉</span>
+      <span class="nav-label">Monitor</span>
+    </button>
+    <button class="nav-btn" data-tab="analysis">
+      <span class="nav-icon">⟨/⟩</span>
+      <span class="nav-label">Analysis</span>
+    </button>
+    <button class="nav-btn" data-tab="samples">
+      <span class="nav-icon">⬡</span>
+      <span class="nav-label">Samples</span>
+    </button>
+    <button class="nav-btn" data-tab="compare">
+      <span class="nav-icon">≈</span>
+      <span class="nav-label">Compare</span>
+    </button>
+    <button class="nav-btn" data-tab="reports">
+      <span class="nav-icon">⊞</span>
+      <span class="nav-label">Reports</span>
+    </button>
+  </nav>
+
+  <!-- Main content -->
+  <main class="content">
+
+    <!-- ── MONITOR TAB ─────────────────────────────────────────────────────── -->
+    <div id="tab-monitor" class="tab active">
+      <div class="tab-header">
+        <h2>Live Monitor</h2>
+        <div class="tab-header-actions">
+          <select id="port-select" class="input-select" style="width:180px">
+            <option value="">Select port…</option>
+          </select>
+          <select id="baud-select" class="input-select" style="width:120px">
+            <option value="115200" selected>115200</option>
+            <option value="9600">9600</option>
+            <option value="57600">57600</option>
+          </select>
+          <button id="btn-refresh-ports" class="btn-ghost">↺ Refresh</button>
+          <button id="btn-connect" class="btn-primary">Connect</button>
+          <button id="btn-record" class="btn-accent" disabled>⏺ Record</button>
+        </div>
+      </div>
+
+      <div class="monitor-grid">
+        <!-- Big readings panel -->
+        <div class="readings-panel">
+          <div class="reading-card" id="card-t-cold">
+            <div class="reading-label">T Cold</div>
+            <div class="reading-value" id="val-t-cold">—</div>
+            <div class="reading-unit">°C</div>
+            <div class="reading-delta" id="delta-t-cold"></div>
+          </div>
+          <div class="reading-card" id="card-t-hot">
+            <div class="reading-label">T Hot</div>
+            <div class="reading-value" id="val-t-hot">—</div>
+            <div class="reading-unit">°C</div>
+            <div class="reading-delta" id="delta-t-hot"></div>
+          </div>
+          <div class="reading-card" id="card-force">
+            <div class="reading-label">Force</div>
+            <div class="reading-value" id="val-force">—</div>
+            <div class="reading-unit">N</div>
+          </div>
+          <div class="reading-card" id="card-disp">
+            <div class="reading-label">Displacement</div>
+            <div class="reading-value" id="val-disp">—</div>
+            <div class="reading-unit">mm</div>
+          </div>
+
+          <div class="cop-card">
+            <div class="cop-label">COP (running)</div>
+            <div class="cop-value" id="val-cop">—</div>
+            <div class="cop-bar-wrap">
+              <div class="cop-bar" id="cop-bar"></div>
+            </div>
+            <div class="cop-sub" id="cop-carnot"></div>
+          </div>
+
+          <div class="span-card">
+            <div class="span-row">
+              <span class="span-lbl">ΔT span</span>
+              <span class="span-val" id="val-span">—</span>
+            </div>
+            <div class="span-row">
+              <span class="span-lbl">Cycles</span>
+              <span class="span-val" id="val-cycles">0</span>
+            </div>
+            <div class="span-row">
+              <span class="span-lbl">Session</span>
+              <span class="span-val" id="val-session">00:00</span>
+            </div>
+            <div class="span-row">
+              <span class="span-lbl">Samples/s</span>
+              <span class="span-val" id="val-rate">—</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Charts panel -->
+        <div class="charts-panel">
+          <div class="chart-row">
+            <div class="chart-wrap">
+              <div class="chart-title">Temperature (°C)</div>
+              <canvas id="chart-temp"></canvas>
+            </div>
+            <div class="chart-wrap">
+              <div class="chart-title">Force (N)</div>
+              <canvas id="chart-force"></canvas>
+            </div>
+          </div>
+          <div class="chart-row">
+            <div class="chart-wrap">
+              <div class="chart-title">Displacement (mm)</div>
+              <canvas id="chart-disp"></canvas>
+            </div>
+            <div class="chart-wrap">
+              <div class="chart-title">Rolling COP</div>
+              <canvas id="chart-cop"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="monitor-footer">
+        <div id="serial-log" class="serial-log"></div>
+      </div>
+    </div>
+
+    <!-- ── ANALYSIS TAB ────────────────────────────────────────────────────── -->
+    <div id="tab-analysis" class="tab">
+      <div class="tab-header">
+        <h2>Analysis</h2>
+      </div>
+
+      <div class="analysis-grid">
+
+        <!-- DSC Section -->
+        <div class="analysis-card">
+          <div class="analysis-card-header">
+            <h3>DSC Analysis</h3>
+            <span class="badge-info">Differential Scanning Calorimetry</span>
+          </div>
+          <p class="hint">Load a DSC export CSV (columns: temperature_C, heat_flow_mW_mg). The tool will detect peaks, integrate ΔH, and compute ΔS at the transition temperature.</p>
+          <div class="file-drop-row">
+            <button id="btn-load-dsc" class="btn-primary">Open DSC file…</button>
+            <span id="dsc-filename" class="filename-label">No file loaded</span>
+          </div>
+
+          <div id="dsc-results" class="results-grid hidden">
+            <div class="result-item">
+              <span class="result-label">T onset</span>
+              <span class="result-value" id="dsc-t-onset">—</span>
+              <span class="result-unit">°C</span>
+            </div>
+            <div class="result-item">
+              <span class="result-label">T offset</span>
+              <span class="result-value" id="dsc-t-offset">—</span>
+              <span class="result-unit">°C</span>
+            </div>
+            <div class="result-item">
+              <span class="result-label">ΔH</span>
+              <span class="result-value" id="dsc-dh">—</span>
+              <span class="result-unit">J g⁻¹</span>
+            </div>
+            <div class="result-item">
+              <span class="result-label">ΔS</span>
+              <span class="result-value" id="dsc-ds">—</span>
+              <span class="result-unit">mJ g⁻¹K⁻¹</span>
+            </div>
+            <div class="result-item">
+              <span class="result-label">T*</span>
+              <span class="result-value" id="dsc-tstar">—</span>
+              <span class="result-unit">K</span>
+            </div>
+          </div>
+
+          <div class="chart-wrap tall">
+            <canvas id="chart-dsc"></canvas>
+          </div>
+        </div>
+
+        <!-- Stress-Strain Section -->
+        <div class="analysis-card">
+          <div class="analysis-card-header">
+            <h3>Stress–Strain Analysis</h3>
+            <span class="badge-info">Tensile Testing</span>
+          </div>
+          <p class="hint">Load a tensile test CSV (columns: strain_pct, stress_MPa). Computes Young's modulus, hysteresis area, and max stress.</p>
+          <div class="file-drop-row">
+            <button id="btn-load-tensile" class="btn-primary">Open tensile file…</button>
+            <span id="tensile-filename" class="filename-label">No file loaded</span>
+          </div>
+
+          <div id="tensile-results" class="results-grid hidden">
+            <div class="result-item">
+              <span class="result-label">E (initial)</span>
+              <span class="result-value" id="ten-modulus">—</span>
+              <span class="result-unit">kPa</span>
+            </div>
+            <div class="result-item">
+              <span class="result-label">σ max</span>
+              <span class="result-value" id="ten-stress-max">—</span>
+              <span class="result-unit">MPa</span>
+            </div>
+            <div class="result-item">
+              <span class="result-label">ε max</span>
+              <span class="result-value" id="ten-strain-max">—</span>
+              <span class="result-unit">%</span>
+            </div>
+            <div class="result-item">
+              <span class="result-label">Hysteresis</span>
+              <span class="result-value" id="ten-hysteresis">—</span>
+              <span class="result-unit">MJ m⁻³</span>
+            </div>
+          </div>
+
+          <div class="chart-wrap tall">
+            <canvas id="chart-tensile"></canvas>
+          </div>
+        </div>
+
+        <!-- Demonstrator log Section -->
+        <div class="analysis-card full-width">
+          <div class="analysis-card-header">
+            <h3>Demonstrator Log Analysis</h3>
+            <span class="badge-info">COP · Temperature Span · Second-Law Efficiency</span>
+          </div>
+          <p class="hint">Load a recorded demonstrator log CSV to compute per-cycle COP, Carnot COP, second-law efficiency, and temperature span. Compatible with both live-recorded sessions and Arduino CSV exports.</p>
+          <div class="file-drop-row">
+            <input id="demo-mass" type="number" class="input-number" value="1.0" step="0.01" min="0.01" style="width:80px">
+            <label style="color:var(--text-secondary);font-size:13px;">g film mass</label>
+            <button id="btn-load-demo" class="btn-primary">Open log file…</button>
+            <span id="demo-filename" class="filename-label">No file loaded</span>
+          </div>
+
+          <div id="demo-results" class="results-grid hidden" style="grid-template-columns:repeat(5,1fr)">
+            <div class="result-item">
+              <span class="result-label">Cycles detected</span>
+              <span class="result-value" id="demo-cycles">—</span>
+            </div>
+            <div class="result-item">
+              <span class="result-label">Mean COP</span>
+              <span class="result-value" id="demo-cop">—</span>
+            </div>
+            <div class="result-item">
+              <span class="result-label">COP Carnot</span>
+              <span class="result-value" id="demo-cop-carnot">—</span>
+            </div>
+            <div class="result-item">
+              <span class="result-label">η 2nd law</span>
+              <span class="result-value" id="demo-eta">—</span>
+              <span class="result-unit">%</span>
+            </div>
+            <div class="result-item">
+              <span class="result-label">ΔT span mean</span>
+              <span class="result-value" id="demo-span">—</span>
+              <span class="result-unit">K</span>
+            </div>
+          </div>
+
+          <div class="demo-charts-row">
+            <div class="chart-wrap"><div class="chart-title">COP per cycle</div><canvas id="chart-demo-cop"></canvas></div>
+            <div class="chart-wrap"><div class="chart-title">Temperature span (K)</div><canvas id="chart-demo-span"></canvas></div>
+            <div class="chart-wrap"><div class="chart-title">2nd-law efficiency (%)</div><canvas id="chart-demo-eta"></canvas></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── SAMPLES TAB ─────────────────────────────────────────────────────── -->
+    <div id="tab-samples" class="tab">
+      <div class="tab-header">
+        <h2>Sample Database</h2>
+        <div class="tab-header-actions">
+          <button id="btn-new-sample" class="btn-primary">+ New Sample</button>
+        </div>
+      </div>
+
+      <div id="samples-grid" class="samples-grid"></div>
+
+      <!-- New sample modal -->
+      <div id="modal-sample" class="modal hidden">
+        <div class="modal-box">
+          <div class="modal-header">
+            <h3 id="modal-sample-title">New Polymer Film Sample</h3>
+            <button class="modal-close" id="btn-modal-close">✕</button>
+          </div>
+          <div class="modal-body">
+            <div class="form-row">
+              <label>Material</label>
+              <select id="s-material" class="input-select">
+                <option>Natural Rubber (NR)</option>
+                <option>PVDF</option>
+                <option>Silicone (PDMS)</option>
+                <option>SMA TiNiCuCo (reference)</option>
+                <option>Other</option>
+              </select>
+            </div>
+            <div class="form-row">
+              <label>Sample ID</label>
+              <input id="s-id" type="text" class="input-text" placeholder="e.g. NR-001">
+            </div>
+            <div class="form-grid">
+              <div class="form-row">
+                <label>Thickness (mm)</label>
+                <input id="s-thickness" type="number" class="input-text" step="0.01" placeholder="0.50">
+              </div>
+              <div class="form-row">
+                <label>Width (mm)</label>
+                <input id="s-width" type="number" class="input-text" step="0.1" placeholder="20">
+              </div>
+              <div class="form-row">
+                <label>Length (mm)</label>
+                <input id="s-length" type="number" class="input-text" step="0.1" placeholder="80">
+              </div>
+              <div class="form-row">
+                <label>Mass (g)</label>
+                <input id="s-mass" type="number" class="input-text" step="0.001" placeholder="0.850">
+              </div>
+            </div>
+            <div class="form-row">
+              <label>Max strain target (%)</label>
+              <input id="s-strain" type="number" class="input-text" value="200">
+            </div>
+            <div class="form-row">
+              <label>Notes</label>
+              <textarea id="s-notes" class="input-textarea" rows="3" placeholder="Preparation notes, supplier, batch…"></textarea>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button id="btn-modal-cancel" class="btn-ghost">Cancel</button>
+            <button id="btn-modal-save" class="btn-primary">Save Sample</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── COMPARE TAB ─────────────────────────────────────────────────────── -->
+    <div id="tab-compare" class="tab">
+      <div class="tab-header">
+        <h2>Material Comparison</h2>
+      </div>
+
+      <div class="compare-controls">
+        <p class="hint">Select experiments from the sample database to compare side-by-side against each other and the SMA reference baseline.</p>
+        <div id="compare-checkboxes" class="compare-checkboxes"></div>
+        <button id="btn-run-compare" class="btn-primary">Update Comparison</button>
+      </div>
+
+      <div class="compare-charts">
+        <div class="chart-wrap"><div class="chart-title">ΔT_ad (K)</div><canvas id="chart-cmp-dt"></canvas></div>
+        <div class="chart-wrap"><div class="chart-title">Mean COP</div><canvas id="chart-cmp-cop"></canvas></div>
+        <div class="chart-wrap"><div class="chart-title">Material cost (€ m⁻²)</div><canvas id="chart-cmp-cost"></canvas></div>
+        <div class="chart-wrap"><div class="chart-title">Cycle count</div><canvas id="chart-cmp-cycles"></canvas></div>
+      </div>
+
+      <div id="compare-table-wrap" class="compare-table-wrap"></div>
+    </div>
+
+    <!-- ── REPORTS TAB ─────────────────────────────────────────────────────── -->
+    <div id="tab-reports" class="tab">
+      <div class="tab-header">
+        <h2>Reports</h2>
+      </div>
+
+      <div class="reports-panel">
+        <div class="reports-config">
+          <h3>Generate Experiment Report</h3>
+          <p class="hint">Select a sample and its most recent experiment log to generate a standalone HTML report suitable for lab records or sharing with collaborators.</p>
+
+          <div class="form-row">
+            <label>Sample</label>
+            <select id="report-sample" class="input-select"></select>
+          </div>
+          <div class="form-row">
+            <label>Include sections</label>
+            <div class="checkbox-group">
+              <label><input type="checkbox" id="rpt-dsc" checked> DSC results</label>
+              <label><input type="checkbox" id="rpt-tensile" checked> Stress–strain</label>
+              <label><input type="checkbox" id="rpt-cop" checked> COP analysis</label>
+              <label><input type="checkbox" id="rpt-notes" checked> Notes</label>
+            </div>
+          </div>
+          <div class="form-row">
+            <label>Experimenter</label>
+            <input id="rpt-author" type="text" class="input-text" placeholder="Dr. Xu / your name">
+          </div>
+
+          <button id="btn-gen-report" class="btn-primary" style="margin-top:16px">Generate & Export HTML</button>
+        </div>
+
+        <div class="reports-preview">
+          <h3>Preview</h3>
+          <div id="report-preview" class="report-preview">
+            <p style="color:var(--text-secondary);text-align:center;margin-top:40px">Configure and generate a report to preview it here.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="js/dsp.js"></script>
+<script src="js/app.js"></script>
+<script src="js/monitor.js"></script>
+<script src="js/analysis.js"></script>
+<script src="js/database.js"></script>
+<script src="js/compare.js"></script>
+<script src="js/reports.js"></script>
+</body>
+</html>
