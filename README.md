@@ -1,46 +1,162 @@
-# Elastocaloric Heat Pump
+# Low-Cost Elastocaloric Heat Pump — Polymer Film Platform
 
-Low-cost elastocaloric cooling research using polymer films as the active material.
+[![CI](https://github.com/OutBlade/elastocaloric-heat-pump/actions/workflows/validate.yml/badge.svg)](https://github.com/OutBlade/elastocaloric-heat-pump/actions/workflows/validate.yml)
+[![Python 3.11](https://img.shields.io/badge/python-3.11-blue.svg)](https://www.python.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-## Why This Topic
+**Research project** · Institute of Microstructure Technology (IMT) · KIT  
+*Zero-emission Thermal Technologies — Dr. Jingyuan Xu Group*
 
-Cooling and refrigeration already consume a large share of the world's electricity, and demand is only growing. New technologies are needed that are more efficient, cost-effective, and environmentally friendly.
+---
 
-Elastocaloric cooling is a promising alternative: it uses solid materials that heat up and cool down under mechanical stress instead of harmful refrigerants. Polymer films combine low cost with excellent heat transfer properties, making them a strong candidate for the next generation of green cooling technologies.
+## Motivation
 
-## Project Goals
+Conventional vapor-compression cooling accounts for roughly 20 % of global electricity consumption and relies on HFC refrigerants with global-warming potentials orders of magnitude above CO₂. Elastocaloric (eC) cooling eliminates both problems: the working body is a solid-state material — no refrigerant, no compressor, no leakage risk.
 
-1. Explore the thermal and mechanical behavior of novel polymer films
-2. Design and build a small-scale cooling demonstrator using these materials
-3. Evaluate and optimize system performance through experiments
+Shape-memory alloy (SMA) films already demonstrate world-class eC performance (ΔT_ad > 20 K, specific cooling power up to 19 W g⁻¹ for TiNiCuCo). This project asks the complementary question: **can polymer films achieve a practically useful eC effect at a fraction of the material cost?** Polymers such as natural rubber (NR), PVDF, and silicone elastomers cost < 5 € m⁻² and offer strain amplitudes exceeding 300 %, making them attractive for large-area, low-cost demonstrators even if their volumetric eC effect is smaller.
+
+---
+
+## Scientific Objectives
+
+| # | Objective | Key Metric |
+|---|-----------|------------|
+| 1 | Characterize adiabatic temperature change ΔT_ad of candidate polymer films | ΔT_ad ≥ 2 K at ε = 200 % |
+| 2 | Measure fatigue life under cyclic tensile loading | > 10⁵ cycles without fracture |
+| 3 | Build and instrument a single-stage eC demonstrator | COP > 1 at ΔT_span = 5 K |
+| 4 | Compare polymer eC performance against SMA baseline | Normalized W g⁻¹ and J cm⁻³ |
+
+---
+
+## Working Principle
+
+```
+      ┌─────────── STRESS APPLIED ──────────────┐
+      │  Polymer chains align → entropy ↓        │
+      │  Adiabatic temperature RISES (ΔT > 0)    │
+      │  Heat rejected to hot side (heat sink)   │
+      └──────────────────────────────────────────┘
+                         │
+               [mechanical cycle]
+                         │
+      ┌─────────── STRESS RELEASED ─────────────┐
+      │  Chains relax → entropy ↑               │
+      │  Adiabatic temperature DROPS (ΔT < 0)   │
+      │  Heat absorbed from cold side (load)     │
+      └──────────────────────────────────────────┘
+```
+
+The adiabatic temperature change under uniaxial stress is governed by:
+
+```
+ΔT_ad = − (T / ρ c_p) · (∂σ/∂T)_ε · Δε
+```
+
+where ρ is density, c_p specific heat, σ engineering stress, and Δε the applied strain amplitude.  
+The Coefficient of Performance of an ideal regenerative eC cycle is:
+
+```
+COP_ideal = T_cold / (T_hot − T_cold)     [Carnot limit]
+COP_device = Q_cold / W_mech              [measured]
+```
+
+---
 
 ## Repository Structure
 
 ```
 elastocaloric-heat-pump/
-├── docs/               # Literature, theory, references
-├── materials/          # Material characterization data and test results
-├── design/             # Mechanical and thermal design files (CAD, schematics)
-├── firmware/           # Microcontroller code for actuation and sensing
-├── experiments/        # Raw data, measurement scripts, analysis notebooks
-├── results/            # Processed results, plots, performance metrics
-└── .github/workflows/  # CI for data validation and report generation
+├── materials/               # Raw characterization data per film type
+│   ├── natural_rubber/
+│   ├── pvdf/
+│   └── silicone/
+├── experiments/             # Measurement data organized by campaign
+│   ├── 01_dsc/              # Differential scanning calorimetry
+│   ├── 02_tensile/          # Stress–strain & fatigue testing
+│   ├── 03_ir_thermography/  # IR camera recordings during cycling
+│   └── 04_demonstrator/     # Full-cycle COP measurements
+├── analysis/                # Python analysis scripts and notebooks
+│   ├── dsc_analysis.py
+│   ├── ir_thermography.py
+│   ├── cop_calculator.py
+│   └── notebooks/
+│       └── 01_baseline_characterization.ipynb
+├── design/                  # CAD and schematic files for demonstrator
+├── firmware/                # Microcontroller code (Arduino/STM32)
+├── results/                 # Processed figures and summary tables
+├── docs/
+│   ├── theory.md
+│   ├── setup.md
+│   └── materials_selection.md
+└── .github/workflows/
+    └── validate.yml
 ```
 
-## Working Principle
-
-Elastocaloric materials exhibit the elastocaloric effect: applying mechanical stress causes them to release heat (warming), and removing stress causes them to absorb heat (cooling). By cycling stress on a polymer film while controlling heat transfer to a load and a heat sink, a continuous cooling effect can be achieved.
-
-Advantages over vapor-compression systems:
-- No refrigerants (zero GWP)
-- Solid-state — fewer moving parts
-- Polymer films are inexpensive and scalable
-- High surface-area-to-volume ratio enables efficient heat transfer
+---
 
 ## Getting Started
 
-See `docs/setup.md` for hardware requirements and initial assembly instructions.
+### Requirements
+
+- Python ≥ 3.11
+- Hardware: linear actuator, force sensor, IR camera or thermocouple array, microcontroller
+
+```bash
+pip install -r requirements.txt
+```
+
+### Run the baseline characterization notebook
+
+```bash
+jupyter notebook analysis/notebooks/01_baseline_characterization.ipynb
+```
+
+### Validate all data files locally
+
+```bash
+python analysis/validate_data.py
+```
+
+---
+
+## Candidate Materials
+
+| Material | Max strain ε_max | ΔT_ad (literature) | Cost | Fatigue |
+|----------|------------------|--------------------|------|---------|
+| Natural rubber (NR) | ~600 % | ~2–4 K | ~1 € m⁻² | moderate |
+| PVDF film | ~10 % | ~1–2 K | ~8 € m⁻² | high |
+| Silicone elastomer | ~400 % | ~1–3 K | ~3 € m⁻² | high |
+| NiTi SMA (reference) | ~8 % | ~15–25 K | ~500 € m⁻² | very high |
+
+---
+
+## Instrumentation
+
+| Measurement | Method | Tool |
+|-------------|--------|------|
+| ΔT_ad during loading | IR thermography (FLIR / optris) | `analysis/ir_thermography.py` |
+| Phase transition enthalpy | DSC (TA Instruments / Mettler) | `analysis/dsc_analysis.py` |
+| Stress–strain behavior | Universal testing machine | `experiments/02_tensile/` |
+| Strain field | Digital image correlation (DIC) | open-source Ncorr / µDIC |
+| System COP | Power meter + thermocouple log | `analysis/cop_calculator.py` |
+
+---
+
+## Relation to IMT / ZET Research
+
+This project directly extends the ZET group's SMA film-based eC cooling platform to low-cost polymer substrates, addressing the cost-scalability gap identified in recent SMA film device work (Xu et al., *Shape Memory and Superelasticity*, 2024). Polymer films share the large surface-to-volume advantage of SMA foils for solid-contact heat transfer while offering a dramatically reduced material cost — a prerequisite for residential and consumer-scale deployment.
+
+---
+
+## References
+
+1. Xu J. et al. (2024). SMA Film-Based Elastocaloric Cooling Devices. *Shape Memory and Superelasticity*. https://doi.org/10.1007/s40830-024-00484-y  
+2. Greibich F. et al. (2021). Elastocaloric heat pump with specific cooling power of 20.9 W g⁻¹. *Nature Energy*, 6, 260–267.  
+3. Moya X. & Mathur N. D. (2020). Caloric materials for cooling and heating. *Science*, 370(6518), 797–803.  
+4. Tušek J. et al. (2016). A regenerative elastocaloric heat pump. *Nature Energy*, 1, 16134.
+
+---
 
 ## License
 
-MIT
+MIT — see [LICENSE](LICENSE)

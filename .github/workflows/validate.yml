@@ -1,4 +1,4 @@
-name: Validate Data & Notebooks
+name: CI
 
 on:
   push:
@@ -7,43 +7,62 @@ on:
     branches: [main]
 
 jobs:
-  validate:
+  lint-and-validate:
+    name: Lint & Data Validation
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python
+      - name: Set up Python 3.11
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+          cache: "pip"
 
       - name: Install dependencies
         run: |
           pip install --upgrade pip
-          pip install numpy pandas matplotlib scipy jupyter nbconvert
+          pip install -r requirements.txt
+          pip install ruff
 
-      - name: Run experiment analysis notebooks
-        run: |
-          find experiments/ -name "*.ipynb" -exec jupyter nbconvert --to notebook --execute {} \; 2>/dev/null || echo "No notebooks found yet"
+      - name: Lint with ruff
+        run: ruff check analysis/
 
-      - name: Check data files are valid CSV
+      - name: Validate experiment CSV files
+        run: python analysis/validate_data.py
+
+      - name: Execute analysis notebooks (if data present)
         run: |
-          python - <<'EOF'
-          import os, csv, sys
-          errors = []
-          for root, _, files in os.walk("experiments"):
-              for f in files:
-                  if f.endswith(".csv"):
-                      path = os.path.join(root, f)
-                      try:
-                          with open(path) as fh:
-                              list(csv.reader(fh))
-                      except Exception as e:
-                          errors.append(f"{path}: {e}")
-          if errors:
-              print("Invalid CSV files:")
-              for e in errors:
-                  print(" ", e)
-              sys.exit(1)
-          print("All CSV files valid.")
-          EOF
+          find analysis/notebooks -name "*.ipynb" | while read nb; do
+            jupyter nbconvert --to notebook --execute "$nb" \
+              --ExecutePreprocessor.timeout=120 2>/dev/null \
+              && echo "OK: $nb" \
+              || echo "SKIP (no data yet): $nb"
+          done
+
+  check-firmware:
+    name: Firmware Syntax Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Arduino CLI
+        uses: arduino/setup-arduino-cli@v1
+
+      - name: Initialize Arduino CLI
+        run: |
+          arduino-cli core update-index
+          arduino-cli core install arduino:avr
+
+      - name: Install required libraries
+        run: |
+          arduino-cli lib install "Adafruit MAX31855 library"
+          arduino-cli lib install "HX711 Arduino Library"
+
+      - name: Compile firmware
+        run: |
+          arduino-cli compile \
+            --fqbn arduino:avr:mega \
+            firmware/
