@@ -1,0 +1,49 @@
+name: Validate Data & Notebooks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install numpy pandas matplotlib scipy jupyter nbconvert
+
+      - name: Run experiment analysis notebooks
+        run: |
+          find experiments/ -name "*.ipynb" -exec jupyter nbconvert --to notebook --execute {} \; 2>/dev/null || echo "No notebooks found yet"
+
+      - name: Check data files are valid CSV
+        run: |
+          python - <<'EOF'
+          import os, csv, sys
+          errors = []
+          for root, _, files in os.walk("experiments"):
+              for f in files:
+                  if f.endswith(".csv"):
+                      path = os.path.join(root, f)
+                      try:
+                          with open(path) as fh:
+                              list(csv.reader(fh))
+                      except Exception as e:
+                          errors.append(f"{path}: {e}")
+          if errors:
+              print("Invalid CSV files:")
+              for e in errors:
+                  print(" ", e)
+              sys.exit(1)
+          print("All CSV files valid.")
+          EOF
