@@ -52,7 +52,6 @@
       "target": [{ "target": "nsis", "arch": ["x64"] }],
       "artifactName": "ECLabSetup-${version}.exe",
       "publisherName": "OutBlade Research Tools",
-      "fileDescription": "EC-Lab — Elastocaloric Research Platform",
       "legalTrademarks": "EC-Lab by OutBlade",
       "requestedExecutionLevel": "asInvoker",
       "signingHashAlgorithms": null,
