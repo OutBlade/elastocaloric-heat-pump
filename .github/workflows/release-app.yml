@@ -3,14 +3,14 @@ name: Release EC-Lab
 on:
   push:
     tags:
-      - 'app-v*'   # trigger on tags like app-v1.0.1
+      - 'app-v*'
 
 permissions:
   contents: write
 
 jobs:
-  build-windows:
-    name: Build Windows installer
+  build-and-publish:
+    name: Build & publish Windows installer
     runs-on: windows-latest
 
     steps:
@@ -23,6 +23,18 @@ jobs:
           cache: 'npm'
           cache-dependency-path: app/package.json
 
+      # Derive semver from the git tag (app-v1.0.3 → 1.0.3) and write it
+      # into package.json so the installer filename and latest.yml match the tag.
+      - name: Sync version from tag
+        shell: pwsh
+        working-directory: app
+        run: |
+          $version = "${{ github.ref_name }}" -replace '^app-v', ''
+          $pkg = Get-Content package.json -Raw | ConvertFrom-Json
+          $pkg.version = $version
+          $pkg | ConvertTo-Json -Depth 10 | Set-Content package.json -NoNewline
+          Write-Output "Building version $version"
+
       - name: Install dependencies
         working-directory: app
         run: npm install
@@ -31,53 +43,13 @@ jobs:
         working-directory: app
         run: npx electron-rebuild -f -w serialport
 
-      - name: Build Windows installer
+      # electron-builder publishes directly to GitHub Releases.
+      # It creates the release and uploads:
+      #   ECLabSetup-x.y.z.exe
+      #   ECLabSetup-x.y.z.exe.blockmap
+      #   latest.yml          ← electron-updater reads this for auto-update
+      - name: Build and publish to GitHub Releases
         working-directory: app
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npm run dist:win
-
-      - name: Upload installer artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ECLabSetup-windows
-          path: app/dist/ECLabSetup-*.exe
-
-  publish:
-    name: Publish GitHub Release
-    needs: build-windows
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Download artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: ECLabSetup-windows
-          path: dist/
-
-      - name: Get version from tag
-        id: version
-        run: echo "version=${GITHUB_REF_NAME#app-v}" >> $GITHUB_OUTPUT
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          name: "EC-Lab v${{ steps.version.outputs.version }}"
-          body: |
-            ## EC-Lab v${{ steps.version.outputs.version }}
-
-            Elastocaloric Research Platform — desktop app for Dr. Xu's ZET lab.
-
-            ### Install
-            Download `ECLabSetup-${{ steps.version.outputs.version }}.exe` and run it.
-            Existing installations update automatically within 5 minutes of launch.
-
-            ### What's included
-            Live serial monitor · DSC analysis · COP dashboard · Sample database · HTML reports
-          files: dist/ECLabSetup-*.exe
-          draft: false
-          prerelease: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm run dist:win -- --publish always
