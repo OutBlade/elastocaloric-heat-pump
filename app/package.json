@@ -1,6 +1,6 @@
 {
   "name": "ec-lab",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "Daily-use research tool for elastocaloric polymer film experiments — live serial monitor, DSC analysis, COP dashboard, and sample database.",
   "main": "main.js",
   "author": "OutBlade",
@@ -51,6 +51,10 @@
     "win": {
       "target": [{ "target": "nsis", "arch": ["x64"] }],
       "artifactName": "ECLabSetup-${version}.exe",
+      "publisherName": "OutBlade Research Tools",
+      "fileDescription": "EC-Lab — Elastocaloric Research Platform",
+      "legalTrademarks": "EC-Lab by OutBlade",
+      "requestedExecutionLevel": "asUser",
       "signingHashAlgorithms": null,
       "sign": null
     },
@@ -61,7 +65,11 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "EC-Lab"
+      "shortcutName": "EC-Lab",
+      "installerLanguages": ["English"],
+      "language": "1033",
+      "warningsAsErrors": false,
+      "deleteAppDataOnUninstall": false
     },
     "mac": {
       "target": "dmg",

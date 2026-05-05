@@ -79,6 +79,9 @@
           <button id="btn-refresh-ports" class="btn-ghost">↺ Refresh</button>
           <button id="btn-connect" class="btn-primary">Connect</button>
           <button id="btn-record" class="btn-accent" disabled>⏺ Record</button>
+          <div class="toolbar-divider"></div>
+          <button id="btn-demo" class="btn-demo">▶ Demo</button>
+          <span id="demo-badge" class="demo-badge hidden">DEMO</span>
         </div>
       </div>
 
@@ -181,11 +184,12 @@
             <h3>DSC Analysis</h3>
             <span class="badge-info">Differential Scanning Calorimetry</span>
           </div>
-          <p class="hint">Load a DSC export CSV (columns: temperature_C, heat_flow_mW_mg). The tool will detect peaks, integrate ΔH, and compute ΔS at the transition temperature.</p>
+          <p class="hint">Load a DSC export CSV (columns: temperature_C, heat_flow_mW_mg) — or paste the data directly. The tool detects peaks, integrates ΔH, and computes ΔS. Results auto-fill the Material Calculator below.</p>
           <div class="file-drop-row">
-            <button id="btn-load-dsc" class="btn-primary">Open DSC file…</button>
+            <button id="btn-load-dsc" class="btn-primary">Open file or use paste ↓</button>
             <span id="dsc-filename" class="filename-label">No file loaded</span>
           </div>
+          <textarea id="paste-dsc" class="input-textarea paste-area" rows="3" placeholder="Or paste CSV data here (temperature_C,heat_flow_mW_mg) then click Open…"></textarea>
 
           <div id="dsc-results" class="results-grid hidden">
             <div class="result-item">
@@ -226,11 +230,12 @@
             <h3>Stress–Strain Analysis</h3>
             <span class="badge-info">Tensile Testing</span>
           </div>
-          <p class="hint">Load a tensile test CSV (columns: strain_pct, stress_MPa). Computes Young's modulus, hysteresis area, and max stress.</p>
+          <p class="hint">Load a tensile test CSV (columns: strain_pct, stress_MPa) — or paste the data directly. Computes Young's modulus, hysteresis area, and max stress.</p>
           <div class="file-drop-row">
-            <button id="btn-load-tensile" class="btn-primary">Open tensile file…</button>
+            <button id="btn-load-tensile" class="btn-primary">Open file or use paste ↓</button>
             <span id="tensile-filename" class="filename-label">No file loaded</span>
           </div>
+          <textarea id="paste-tensile" class="input-textarea paste-area" rows="3" placeholder="Or paste CSV data here (strain_pct,stress_MPa) then click Open…"></textarea>
 
           <div id="tensile-results" class="results-grid hidden">
             <div class="result-item">
@@ -266,13 +271,14 @@
             <h3>Demonstrator Log Analysis</h3>
             <span class="badge-info">COP · Temperature Span · Second-Law Efficiency</span>
           </div>
-          <p class="hint">Load a recorded demonstrator log CSV to compute per-cycle COP, Carnot COP, second-law efficiency, and temperature span. Compatible with both live-recorded sessions and Arduino CSV exports.</p>
+          <p class="hint">Load a recorded session log — or paste CSV data directly. Works with files recorded by the Monitor tab (including Demo mode sessions). Per-cycle COP, Carnot COP, second-law efficiency, and temperature span.</p>
           <div class="file-drop-row">
             <input id="demo-mass" type="number" class="input-number" value="1.0" step="0.01" min="0.01" style="width:80px">
             <label style="color:var(--text-secondary);font-size:13px;">g film mass</label>
-            <button id="btn-load-demo" class="btn-primary">Open log file…</button>
+            <button id="btn-load-demo" class="btn-primary">Open file or use paste ↓</button>
             <span id="demo-filename" class="filename-label">No file loaded</span>
           </div>
+          <textarea id="paste-demo" class="input-textarea paste-area" rows="3" placeholder="Or paste CSV here (timestamp_s,T_cold_C,T_hot_C,force_N,displacement_mm,power_W) then click Open…"></textarea>
 
           <div id="demo-results" class="results-grid hidden" style="grid-template-columns:repeat(5,1fr)">
             <div class="result-item">
@@ -305,6 +311,83 @@
             <div class="chart-wrap"><div class="chart-title">2nd-law efficiency (%)</div><canvas id="chart-demo-eta"></canvas></div>
           </div>
         </div>
+
+        <!-- ── Material Calculator ─────────────────────────────────────────── -->
+        <div class="analysis-card full-width">
+          <div class="analysis-card-header">
+            <h3>Material Calculator</h3>
+            <span class="badge-info">No hardware needed — works from literature values or DSC results</span>
+          </div>
+          <p class="hint">Enter material properties to predict theoretical ΔT_ad, COP, and figure of merit. Load a preset from literature or paste your own DSC results. Use this to rank candidate materials before running any experiment.</p>
+          <span id="calc-hint" class="calc-hint hidden"></span>
+
+          <div class="mat-calc-grid">
+            <div class="mat-inputs">
+              <div class="form-row">
+                <label>Load literature preset</label>
+                <select id="mat-preset" class="input-select">
+                  <option value="">— select material —</option>
+                </select>
+              </div>
+              <div class="form-grid">
+                <div class="form-row">
+                  <label>ΔH (J g⁻¹)</label>
+                  <input id="mat-dh"    type="number" class="input-text" value="3.0" step="0.1" min="0" placeholder="from DSC">
+                </div>
+                <div class="form-row">
+                  <label>T* (K)</label>
+                  <input id="mat-tstar" type="number" class="input-text" value="298" step="1" placeholder="transition temp">
+                </div>
+                <div class="form-row">
+                  <label>ρ (g cm⁻³)</label>
+                  <input id="mat-rho"   type="number" class="input-text" value="0.92" step="0.01">
+                </div>
+                <div class="form-row">
+                  <label>c_p (J g⁻¹ K⁻¹)</label>
+                  <input id="mat-cp"    type="number" class="input-text" value="1.88" step="0.01">
+                </div>
+                <div class="form-row">
+                  <label>ε_max (%)</label>
+                  <input id="mat-eps"   type="number" class="input-text" value="300" step="10">
+                </div>
+                <div class="form-row">
+                  <label>Cost (€ m⁻²)</label>
+                  <input id="mat-cost"  type="number" class="input-text" value="1" step="1">
+                </div>
+              </div>
+              <button id="btn-run-calc" class="btn-primary" style="margin-top:8px">Calculate</button>
+            </div>
+
+            <div class="mat-results-col">
+              <div id="mat-calc-results" class="results-grid hidden" style="grid-template-columns:repeat(2,1fr);margin-bottom:12px">
+                <div class="result-item">
+                  <span class="result-label">ΔT_ad predicted</span>
+                  <span class="result-value" id="mc-delta-t">—</span>
+                  <span class="result-unit">K</span>
+                </div>
+                <div class="result-item">
+                  <span class="result-label">COP at 5 K span</span>
+                  <span class="result-value" id="mc-cop-5k">—</span>
+                </div>
+                <div class="result-item">
+                  <span class="result-label">ΔS</span>
+                  <span class="result-value" id="mc-ds">—</span>
+                  <span class="result-unit">mJ g⁻¹ K⁻¹</span>
+                </div>
+                <div class="result-item">
+                  <span class="result-label">FOM (ΔT·COP/cost)</span>
+                  <span class="result-value" id="mc-fom">—</span>
+                </div>
+              </div>
+              <div id="mc-vs-sma" class="results-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:12px"></div>
+              <div class="chart-wrap" style="min-height:160px">
+                <div class="chart-title">Theoretical COP vs temperature span</div>
+                <canvas id="chart-mat-calc"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
 
