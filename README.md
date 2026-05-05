@@ -14,7 +14,16 @@
 
 [![Download EC-Lab for Windows](https://img.shields.io/badge/Download%20EC--Lab-Windows%20Installer-0078d4?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/OutBlade/elastocaloric-heat-pump/releases/latest)
 
-EC-Lab is a dedicated desktop research tool for daily lab use: live serial monitor from the Arduino controller, in-app DSC and COP analysis, polymer film sample database with fatigue tracking, material comparison against the SMA baseline, and one-click HTML report export.
+<p align="center">
+  <img src="app/docs/screenshots/ec-lab-monitor.png" alt="EC-Lab Live Monitor — real-time elastocaloric cycle data with rolling COP gauge" width="100%">
+</p>
+
+<p align="center"><sub>
+  Live Monitor tab in Demo Mode — Natural Rubber film cycling at 0.4 Hz, ΔT<sub>ad</sub> ≈ 2.5 K, rolling COP 4.42.
+  All four sensor channels update at 10 Hz. No hardware required to explore the interface.
+</sub></p>
+
+EC-Lab is a dedicated desktop research tool for daily lab use — live serial monitor from the Arduino controller, in-app DSC and COP analysis, polymer film sample database with fatigue tracking, material comparison against the SMA baseline, and one-click HTML report export. A built-in **Demo Mode** runs a full simulated elastocaloric cycle so every feature works without connecting any hardware.
 
 > Installs in one click. Updates automatically in the background.
 > See [`app/`](app/) for source code and development instructions.
