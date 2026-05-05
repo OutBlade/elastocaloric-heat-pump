@@ -1,11 +1,23 @@
 # Low-Cost Elastocaloric Heat Pump — Polymer Film Platform
 
 [![CI](https://github.com/OutBlade/elastocaloric-heat-pump/actions/workflows/validate.yml/badge.svg)](https://github.com/OutBlade/elastocaloric-heat-pump/actions/workflows/validate.yml)
+[![Release](https://github.com/OutBlade/elastocaloric-heat-pump/actions/workflows/release-app.yml/badge.svg)](https://github.com/OutBlade/elastocaloric-heat-pump/actions/workflows/release-app.yml)
 [![Python 3.11](https://img.shields.io/badge/python-3.11-blue.svg)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 **Research project** · Institute of Microstructure Technology (IMT) · KIT  
 *Zero-emission Thermal Technologies — Dr. Jingyuan Xu Group*
+
+---
+
+## EC-Lab — Desktop App
+
+[![Download EC-Lab for Windows](https://img.shields.io/badge/Download%20EC--Lab-Windows%20Installer-0078d4?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/OutBlade/elastocaloric-heat-pump/releases/latest)
+
+EC-Lab is a dedicated desktop research tool for daily lab use: live serial monitor from the Arduino controller, in-app DSC and COP analysis, polymer film sample database with fatigue tracking, material comparison against the SMA baseline, and one-click HTML report export.
+
+> Installs in one click. Updates automatically in the background.
+> See [`app/`](app/) for source code and development instructions.
 
 ---
 
