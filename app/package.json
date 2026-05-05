@@ -54,7 +54,7 @@
       "publisherName": "OutBlade Research Tools",
       "fileDescription": "EC-Lab — Elastocaloric Research Platform",
       "legalTrademarks": "EC-Lab by OutBlade",
-      "requestedExecutionLevel": "asUser",
+      "requestedExecutionLevel": "asInvoker",
       "signingHashAlgorithms": null,
       "sign": null
     },
