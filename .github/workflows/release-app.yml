@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   build-and-publish:
-    name: Build & publish Windows installer
+    name: Build and publish Windows installer
     runs-on: windows-latest
 
     steps:
@@ -23,14 +23,12 @@ jobs:
           cache: 'npm'
           cache-dependency-path: app/package.json
 
-      # Derive semver from the git tag (app-v1.0.3 → 1.0.3) and write it
-      # into package.json so the installer filename and latest.yml match the tag.
       - name: Sync version from tag
         shell: pwsh
         working-directory: app
         run: |
-          $version = "${{ github.ref_name }}" -replace '^app-v', ''
-          $pkg = Get-Content package.json -Raw | ConvertFrom-Json
+          $version = "${{ github.ref_name }}" -replace '^app-v'
+          $pkg = Get-Content package.json | ConvertFrom-Json
           $pkg.version = $version
           $pkg | ConvertTo-Json -Depth 10 | Set-Content package.json -NoNewline
           Write-Output "Building version $version"
@@ -39,17 +37,45 @@ jobs:
         working-directory: app
         run: npm install
 
-      - name: Rebuild native modules for Electron
+      - name: Rebuild native modules
         working-directory: app
         run: npx electron-rebuild -f -w serialport
 
-      # electron-builder publishes directly to GitHub Releases.
-      # It creates the release and uploads:
-      #   ECLabSetup-x.y.z.exe
-      #   ECLabSetup-x.y.z.exe.blockmap
-      #   latest.yml          ← electron-updater reads this for auto-update
-      - name: Build and publish to GitHub Releases
+      - name: Build installer
         working-directory: app
+        run: npm run dist:win
+
+      - name: List dist output
+        working-directory: app
+        run: Get-ChildItem dist/
+
+      - name: Get version
+        id: version
+        shell: pwsh
+        run: |
+          $v = "${{ github.ref_name }}" -replace '^app-v'
+          echo "version=$v" >> $env:GITHUB_OUTPUT
+
+      - name: Publish to GitHub Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          name: EC-Lab v${{ steps.version.outputs.version }}
+          body: |
+            ## EC-Lab v${{ steps.version.outputs.version }}
+
+            **Download ECLabSetup-${{ steps.version.outputs.version }}.exe below.**
+
+            Existing installations update automatically within 5 minutes of next launch.
+
+            ### Included
+            Live serial monitor - Demo mode (no hardware needed) - DSC analysis - Material Calculator - COP dashboard - Sample database - HTML reports
+
+            ### First install
+            Download the .exe and run it. If Windows shows a SmartScreen warning click More info then Run anyway.
+          files: |
+            app/dist/ECLabSetup-*.exe
+            app/dist/*.blockmap
+            app/dist/latest.yml
+          fail_on_unmatched_files: true
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npm run dist:win -- --publish always
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,7 +1,7 @@
 {
   "name": "ec-lab",
   "version": "1.0.2",
-  "description": "Daily-use research tool for elastocaloric polymer film experiments — live serial monitor, DSC analysis, COP dashboard, and sample database.",
+  "description": "Daily-use research tool for elastocaloric polymer film experiments.",
   "main": "main.js",
   "author": "OutBlade",
   "license": "MIT",
@@ -10,7 +10,7 @@
     "rebuild": "electron-rebuild -f -w serialport",
     "pack": "electron-builder --dir",
     "dist": "electron-builder",
-    "dist:win": "cross-env CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --win --x64",
+    "dist:win": "cross-env CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --win --x64 --publish never",
     "postinstall": "electron-rebuild -f -w serialport || true"
   },
   "dependencies": {
@@ -27,7 +27,7 @@
   "build": {
     "appId": "com.outblade.eclab",
     "productName": "EC-Lab",
-    "copyright": "Copyright © 2026 OutBlade",
+    "copyright": "Copyright 2026 OutBlade",
     "asar": true,
     "asarUnpack": ["node_modules/serialport/**", "node_modules/@serialport/**"],
     "directories": {
@@ -52,33 +52,23 @@
       "target": [{ "target": "nsis", "arch": ["x64"] }],
       "artifactName": "ECLabSetup-${version}.exe",
       "publisherName": "OutBlade Research Tools",
-      "legalTrademarks": "EC-Lab by OutBlade",
-      "requestedExecutionLevel": "asInvoker",
-      "signingHashAlgorithms": null,
-      "sign": null
+      "requestedExecutionLevel": "asInvoker"
     },
     "nsis": {
       "oneClick": false,
       "perMachine": false,
-      "allowElevation": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "EC-Lab",
-      "installerLanguages": ["English"],
-      "language": "1033",
-      "warningsAsErrors": false,
-      "deleteAppDataOnUninstall": false
+      "shortcutName": "EC-Lab"
     },
     "mac": {
       "target": "dmg",
-      "category": "public.app-category.utilities",
-      "icon": "build/icon.icns"
+      "category": "public.app-category.utilities"
     },
     "linux": {
-      "target": ["AppImage", "deb"],
-      "category": "Science",
-      "icon": "build/icon.png"
+      "target": ["AppImage"],
+      "category": "Science"
     }
   }
 }
